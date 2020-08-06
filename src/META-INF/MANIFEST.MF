@@ -1,0 +1,98 @@
+Manifest-Version: 1.0
+Class-Path: commons-discovery-0.5.jar commons-beanutils-1.8.0.jar iRepor
+ t.jar commons-digester-2.1.jar jfreechart-1.0.13.jar jasperreports-5.1.
+ 0.jar jasperreports-fonts-5.1.0.jar wsdl4j-1.5.2.jar jython.jar zhtml.j
+ ar zkplus.jar gmapsz.jar commons-el.jar commons-io.jar zml.jar json_sim
+ ple.jar jruby.jar zweb.jar cglib.jar zkex.jar fckez.jar junit.jar zhtml
+ -sources.jar zml-sources.jar timeplotz.jar keylistener.jar mvel.jar bsh
+ .jar xercesImpl.jar zk.jar zk-sources.jar zul.jar asm.jar Filters.jar t
+ imelinez.jar zul-sources.jar zkex-sources.jar timelinez-sources.jar zkm
+ ax.jar zcommon-sources.jar ognl.jar jxl.jar js.jar zkplus-sources.jar z
+ commons-el.jar commons-fileupload.jar zcommon.jar zkmax-sources.jar zwe
+ b-sources.jar xbean-spring-2.8.jar wstx-asl-2.9.3.jar stax-1.1.2-dev.ja
+ r log4j-1.2.12.jar xmlbeans-2.4.0-sources.jar jboss-1.0.jar commons-cod
+ ec-1.3.jar generated_xmlbeans.jar qdox-1.5.jar stax-api-1.0.jar xml-res
+ olver-1.1.jar generated_xmlbeans-sources.jar wagon-provider-api-1.0-alp
+ ha-5.jar jcommon-1.0.0.jar avalon-framework-4.1.3.jar junit-3.8.1.jar X
+ mlSchema-1.0.3.jar commons-httpclient-3.0.jar xml-apis-1.3.02.jar commo
+ ns-attributes-api-2.1.jar jdtcore-3.1.0.jar dom4j-1.6.jar ant-1.5.jar p
+ lexus-utils-1.0.4.jar jsr173_1.0_api.jar mail-1.4.jar jdom-1.0.jar comm
+ ons-beanutils-1.6.jar commons-digester-1.7.jar xercesImpl-2.4.0.jar xfi
+ re-all-1.2.6.jar plexus-utils-1.0.0.jar jaxen-1.1-beta-9.jar classworld
+ s-1.1-alpha-2.jar logkit-1.0.1.jar activation-1.1.jar xmlParserAPIs-2.6
+ .2.jar xfire-all-1.2.6-sources.jar stax-utils-20040917.jar spring-1.2.6
+ .jar wsdl4j-1.5.2.jar xbean.jar commons-logging-1.0.4.jar commons-colle
+ ctions-2.1.jar plexus-container-default-1.0-alpha-8.jar apache-commons-
+ lang.jar customization.jar liberoCE.jar axis-1.4.jar jdom-2.0.0.jar Sup
+ erCSV-with_src-1.52.jar spiffy-with_source-all-0.05.jar commons-codec.j
+ ar dom4j.jar jboss-system.jar log4j-boot.jar jboss-xml-binding.jar comm
+ ons-logging.jar jboss-jmx.jar gnu-regexp.jar getopt.jar jboss-common.ja
+ r jaxb-impl.jar jaxen.jar namespace.jar concurrent.jar webdavlib.jar co
+ mmons-httpclient.jar jaxb-api.jar jbossweb.jar jbossweb-extras.jar jstl
+ .jar jasper-jdt.jar jbossweb-service.jar tomcat-jdbc.jar annotations-ap
+ i.jar tomcat-api.jar catalina-ha.jar servlet-api.jar javax.mail.jar cat
+ alina.jar jasper-el.jar tomcat-i18n-ja.jar jasper.jar tomcat-coyote.jar
+  catalina-tribes.jar websocket-api.jar tomcat-i18n-es.jar jsp-api.jar c
+ atalina-ant.jar tomcat-dbcp.jar tomcat-util.jar tomcat7-websocket.jar e
+ l-api.jar ecj-P20140317-1600.jar tomcat-i18n-fr.jar jboss-srp-client.ja
+ r logkit.jar jboss-jaxws-ext.jar jboss-jaxrpc.jar mail.jar jboss-transa
+ ction-client.jar concurrent.jar jboss-saaj.jar jboss-serialization.jar 
+ javassist.jar jbossmq-client.jar jbossws-jboss42.jar commons-httpclient
+ .jar jaxws-rt.jar stax-api.jar ejb3-persistence.jar jbossall-client.jar
+  jboss-system-client.jar jbossjmx-ant.jar hibernate-client.jar stax-ex.
+ jar jaxb-api.jar wsdl4j.jar jboss-ejb3-client.jar xmlsec.jar jbosssx-cl
+ ient.jar avalon-framework.jar jboss-common-client.jar hibernate-annotat
+ ions.jar jaxb-impl.jar jaxws-tools.jar jboss-jsr77-client.jar jettison.
+ jar jboss-iiop-client.jar jnp-client.jar jboss-aop-jdk50-client.jar jbo
+ ss-aspect-jdk50-client.jar getopt.jar wstx.jar servlet-api.jar jmx-clie
+ nt.jar FastInfoset.jar streambuffer.jar jmx-invoker-adaptor-client.jar 
+ jbossws-framework.jar jboss-ejb3x.jar policy.jar jboss-jaxws.jar common
+ s-logging.jar scout.jar log4j.jar jbossws-common.jar jboss-annotations-
+ ejb3.jar jacorb.jar jbossws-client.jar jbossha-client.jar jaxb-xjc.jar 
+ antlr.jar trove.jar jboss-xml-binding.jar jboss-j2ee.jar jboss-client.j
+ ar jboss-deployment.jar jboss-remoting.jar jbosscx-client.jar jbossws-s
+ pi.jar appserv-rt.jar appserv-admin.jar appserv-ext.jar appserv-deploym
+ ent-client.jar webAppEJB.jar commons-collections-3.1.jar commons-valida
+ tor-1.2.0.jar commons-lang-2.1.jar commons-codec-1.3.jar commons-digest
+ er-1.7.jar commons-beanutils-core.jar commons-beanutils-bean-collection
+ s.jar commons-beanutils.jar commons-fileupload.jar jnlp.jar javaee.jar 
+ mariadb-java-client.jar log4j.jar xercesImpl.jar junit.jar servlet-api.
+ jar jython.jar postgresql.jar cron4j-2.2.1.jar ojdbc6.jar commons-colle
+ ctions-3.1.jar swingx-1.6.jar poi-ooxml-3.14-20160307.jar ant-launcher.
+ jar commons-codec-1.10.jar poi-3.14-20160307.jar jcommon-1.0.18.jar gro
+ ovy-all-2.4.7.jar lablib-checkboxtree-3.3.jar ant.jar mysql-connector-j
+ ava-5.1.13-bin.jar bsh-2.0b6.jar ant-commons-net.jar looks-2.0.4.jar sc
+ ript-api.jar xjavadoc-1.1.jar jpedal.jar xml-apis.jar jsp-api.jar groov
+ y-engine.jar jstl.jar miglayout-3.7.1-swing.jar standard.jar c3p0-0.9.1
+ .2.jar payflow.jar Verisign.jar cglib.jar ant-contrib-1.0b1.jar wizard.
+ jar OpenForecast-0.5.0.jar jfreechart-1.0.15.jar jgraph.jar iText-2.1.7
+ .jar c3p0-oracle-thin-extras-0.9.1.2.jar slf4j-api-1.6.0.jar xmlbeans-2
+ .6.0.jar commons-logging-1.2.jar ooxml-schemas-1.3.jar activemq-core-5.
+ 7.0.jar mail.jar jython-engine.jar logkit.jar barbecue-1.5-beta1.jar bs
+ h-engine.jar commons-net-1.4.0.jar jpayment.jar commons-io.jar ADempier
+ ePOS.jar commons-betwixt-0.8-RC1.jar commons-collections-3.1.jar fyracl
+ e.jar wstx-asl-3.0.2.jar ojdbc6.jar commons-dbcp-1.2.1.jar commons-bean
+ utils-1.7.0.jar commons-codec-1.3.jar commons-logging-1.0.4.jar jakarta
+ -oro-2.0.8.jar commons-digester-1.7.jar postgresql.jar dom4j-1.4.jar an
+ t-contrib-1.0b1.jar commons-lang-2.1.jar stax-api-1.0.1.jar DdlUtils-1.
+ 0-RC1.jar commons-pool-1.2.jar jaxrpc-api.jar dom4j.jar javassist.jar b
+ sf.jar properties-plugin.jar servlet-api.jar jboss-jaxws-ext.jar ejb3-p
+ ersistence.jar commons-httpclient.jar jbossjta-integration.jar jboss-vf
+ s.jar jbossjta.jar jboss-srp.jar logkit.jar cglib.jar jmx-adaptor-plugi
+ n.jar commons-logging.jar jboss-ejb3x.jar commons-collections.jar xmlen
+ titymgr.jar jboss-jsr77.jar jaxen.jar bindingservice-plugin.jar jboss-j
+ axrpc.jar jboss-remoting.jar jbossws-common.jar commons-codec.jar jboss
+ ts-common.jar scheduler-plugin.jar log4j.jar slf4j-api-1.7.8.jar jboss-
+ common-jdbc-wrapper.jar scheduler-plugin-example.jar jboss-jaxws.jar hi
+ bernate3.jar hibernate-annotations.jar jboss-serialization.jar jbossws-
+ spi.jar mail.jar hsqldb-plugin.jar autonumber-plugin.jar log4j-snmp-app
+ ender.jar bcel.jar jboss-iiop.jar jnpserver.jar jboss-jsr88.jar slf4j-1
+ .7.8.zip antlr.jar jbossws-jboss42.jar jboss-j2ee.jar jboss.jar joesnmp
+ .jar jboss-hibernate.jar jsp-api.jar jboss-remoting-int.jar hsqldb.jar 
+ hibernate-entitymanager.jar jbosssx.jar jboss-jca.jar jbossws-framework
+ .jar jboss-management.jar jboss-transaction.jar el-api.jar jboss-monito
+ ring.jar commons-validator-1.2.0.jar commons-lang-2.1.jar commons-beanu
+ tils-bean-collections.jar commons-fileupload.jar commons-collections-3.
+ 1.jar commons-codec-1.3.jar commons-beanutils-core.jar commons-digester
+ -1.7.jar commons-beanutils.jar
+

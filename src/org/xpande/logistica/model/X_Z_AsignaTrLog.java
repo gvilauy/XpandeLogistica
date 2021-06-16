@@ -24,14 +24,14 @@ import org.compiere.model.*;
 
 /** Generated Model for Z_AsignaTrLog
  *  @author Adempiere (generated) 
- *  @version Release 3.9.0 - $Id$ */
+ *  @version Release 3.9.1 - $Id$ */
 public class X_Z_AsignaTrLog extends PO implements I_Z_AsignaTrLog, I_Persistent 
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20200806L;
+	private static final long serialVersionUID = 20210616L;
 
     /** Standard Constructor */
     public X_Z_AsignaTrLog (Properties ctx, int Z_AsignaTrLog_ID, String trxName)
@@ -516,7 +516,7 @@ public class X_Z_AsignaTrLog extends PO implements I_Z_AsignaTrLog, I_Persistent
 
 	/** Set TextoFiltro2.
 		@param TextoFiltro2 
-		Texto genérico 2 para filtro de valores
+		Texto genérico para filtro de valores
 	  */
 	public void setTextoFiltro2 (String TextoFiltro2)
 	{
@@ -524,7 +524,7 @@ public class X_Z_AsignaTrLog extends PO implements I_Z_AsignaTrLog, I_Persistent
 	}
 
 	/** Get TextoFiltro2.
-		@return Texto genérico 2 para filtro de valores
+		@return Texto genérico para filtro de valores
 	  */
 	public String getTextoFiltro2 () 
 	{
@@ -583,6 +583,31 @@ public class X_Z_AsignaTrLog extends PO implements I_Z_AsignaTrLog, I_Persistent
 	public int getZ_CanalVenta_ID () 
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_Z_CanalVenta_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
+	public I_Z_Picking getZ_Picking() throws RuntimeException
+    {
+		return (I_Z_Picking)MTable.get(getCtx(), I_Z_Picking.Table_Name)
+			.getPO(getZ_Picking_ID(), get_TrxName());	}
+
+	/** Set Z_Picking ID.
+		@param Z_Picking_ID Z_Picking ID	  */
+	public void setZ_Picking_ID (int Z_Picking_ID)
+	{
+		if (Z_Picking_ID < 1) 
+			set_Value (COLUMNNAME_Z_Picking_ID, null);
+		else 
+			set_Value (COLUMNNAME_Z_Picking_ID, Integer.valueOf(Z_Picking_ID));
+	}
+
+	/** Get Z_Picking ID.
+		@return Z_Picking ID	  */
+	public int getZ_Picking_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_Z_Picking_ID);
 		if (ii == null)
 			 return 0;
 		return ii.intValue();

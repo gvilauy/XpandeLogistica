@@ -18,14 +18,20 @@ package org.xpande.logistica.model;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.Properties;
+
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.*;
 import org.compiere.process.DocAction;
 import org.compiere.process.DocOptions;
 import org.compiere.process.DocumentEngine;
 import org.compiere.util.DB;
+import org.compiere.util.Env;
+import org.xpande.comercial.model.*;
 
 /** Generated Model for Z_Picking
  *  @author Adempiere (generated) 
@@ -388,4 +394,289 @@ public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
         .append(getSummary()).append("]");
       return sb.toString();
     }
+
+	/**
+	 * Obtiene información de ordenes de venta a considerarse en este proceso, según los filtros indicados por el usuario.
+	 * @return
+	 */
+	public String getData() {
+		try{
+			// Elimino generacion anterior en caso de que el usuario asi lo indique
+			this.deleteDocuments();
+			// Obtiene ordenes de venta segun criterios de búsqueda y genera lineas.
+			this.getOrders();
+		}
+		catch (Exception e){
+			throw new AdempiereException(e);
+		}
+		return null;
+	}
+
+	/**
+	 * Elimina información actual antes de reprocesar.
+	 * Xpande. Created by Gabriel Vila on 6/15/21.
+	 */
+	private void deleteDocuments() {
+
+		String action = "";
+		try{
+			action = " delete from Z_PickingBPView cascade where z_picking_id =" + this.get_ID();
+			DB.executeUpdateEx(action, get_TrxName());
+
+			action = " delete from Z_PickingProd cascade where z_picking_id =" + this.get_ID();
+			DB.executeUpdateEx(action, get_TrxName());
+		}
+		catch (Exception e){
+			throw new AdempiereException(e);
+		}
+	}
+
+	/***
+	 * Obtiene lineas de ordenes de venta a considerar ordenadas por producto y genera
+	 * lineas por cada una de ellas.
+	 * Xpande. Created by Gabriel Vila on 8/1/20.
+	 * @return
+	 */
+	private void getOrders(){
+
+		String sql = "", action = "";
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+
+		try{
+			String whereClause = this.getWhereDocuments();
+			if (whereClause == null){
+				throw new AdempiereException("Se debe indicar Asignaciones de Transporte y/o Socios de Negocio a Procesar");
+			}
+
+			// Query
+			sql = "  SELECT rvta.z_reservaventa_id, rvta.c_order_id, rvtal.c_orderline_id, " +
+					" rvta.dateordered, rvta.z_asignatrlog_id, o.c_doctypetarget_id AS c_doctype_id, " +
+					" o.documentno, o.c_bpartner_id, o.c_bpartner_location_id, o.c_currency_id," +
+					" o.salesrep_id, o.poreference, o.datepromised, rvtal.m_product_id, rvtal.c_uom_id, prod.c_uom_id AS c_uom_to_id, " +
+					" COALESCE(rvtal.uommultiplyrate, 1::numeric) AS uommultiplyrate, rvtal.qtyreserved, rvtal.qtyreservedent, " +
+					" rvta.m_warehouse_id, bpl.c_salesregion_id" +
+					" FROM z_reservavta rvta " +
+					" join z_reservavtalin rvtal on rvta.z_reservavta_id = rvtal.z_reservavta_id " +
+					" join c_order o on rvta.c_order_id = o.c_order_id " +
+					" JOIN c_orderline ol ON rvtal.c_orderline_id = ol.c_orderline_id " +
+					" JOIN c_bpartner_location bpl ON o.c_bpartner_location_id = bpl.c_bpartner_location_id " +
+					" JOIN m_product prod ON ol.m_product_id = prod.m_product_id " +
+					" left outer join z_asignatrlog atr on (rvta.z_asignatrlog_id = atr.z_asignatrlog_id and atr.z_picking_id is null) " +
+					" WHERE rvta.docstatus = 'CO' " + whereClause +
+					" order by rvtal.m_product_id, rvta.dateordered, rvta.c_order_id ";
+
+			int mProductIDAux = 0;
+			MZPickingProd pickingProd = null;
+			MZPickingBPView pickingBP = null;
+
+			pstmt = DB.prepareStatement(sql, get_TrxName());
+			rs = pstmt.executeQuery();
+
+			while(rs.next()){
+
+				// Corte por producto
+				if (rs.getInt("m_product_id") != mProductIDAux){
+
+					mProductIDAux = rs.getInt("m_product_id");
+
+					// Obtengo modelo de producto a considerar, si ya existe.
+					// Si no existe lo creo ahora
+					pickingProd = this.getPickingProd(mProductIDAux);
+					if ((pickingProd == null) || (pickingProd.get_ID() <= 0)){
+						pickingProd = new MZPickingProd(getCtx(), 0, get_TrxName());
+						pickingProd.setZ_Picking_ID(this.get_ID());
+						pickingProd.setM_Product_ID(mProductIDAux);
+						pickingProd.setC_UOM_ID(rs.getInt("c_uom_to_id"));
+						pickingProd.setQtyPicking(Env.ZERO);
+						pickingProd.setQtyPickingEnt(Env.ZERO);
+						pickingProd.setQtyConfirmed(Env.ZERO);
+						pickingProd.setQtyConfirmedEnt(Env.ZERO);
+						pickingProd.saveEx();
+					}
+				}
+				// Si se indica tipo de proceso por Socio de negocio
+				if (this.getTipoPicking().equalsIgnoreCase(X_Z_Picking.TIPOPICKING_SOCIODENEGOCIO)){
+					// Obtengo modelo de socio a considerar, si ya existe
+					// Si no existe lo creo ahora
+					pickingBP = this.getPickingBP(rs.getInt("c_bpartner_id"));
+					if ((pickingBP == null) || (pickingBP.get_ID() <= 0)){
+						MBPartner partner = new MBPartner(getCtx(), rs.getInt("c_bpartner_id"), null);
+						pickingBP = new MZPickingBPView(getCtx(), 0, get_TrxName());
+						pickingBP.setZ_Picking_ID(this.get_ID());
+						pickingBP.setC_BPartner_ID(rs.getInt("c_bpartner_id"));
+						pickingBP.setTaxID(partner.getTaxID());
+
+						if (partner.get_ValueAsInt("Z_CanalVenta_ID") > 0){
+							pickingBP.setZ_CanalVenta_ID(partner.get_ValueAsInt("Z_CanalVenta_ID"));
+						}
+						pickingBP.saveEx();
+					}
+				}
+
+				MZPickingLin pickingLin = new MZPickingLin(getCtx(), 0, get_TrxName());
+				pickingLin.setZ_Picking_ID(this.get_ID());
+				pickingLin.setZ_PickingProd_ID(pickingProd.get_ID());
+
+				if (pickingBP != null){
+					pickingLin.setZ_PickingBPView_ID(pickingBP.get_ID());
+				}
+
+				pickingLin.setAD_Org_ID(this.getAD_Org_ID());
+				pickingLin.setC_Order_ID(rs.getInt("c_order_id"));
+				pickingLin.setC_OrderLine_ID(rs.getInt("c_orderline_id"));
+				pickingLin.setC_BPartner_ID(rs.getInt("c_bpartner_id"));
+				pickingLin.setC_BPartner_Location_ID(rs.getInt("c_bpartner_location_id"));
+				pickingLin.setDateOrdered(rs.getTimestamp("dateordered"));
+				pickingLin.setM_Product_ID(rs.getInt("m_product_id"));
+				pickingLin.setC_UOM_ID(rs.getInt("c_uom_id"));
+				pickingLin.setC_UOM_To_ID(rs.getInt("c_uom_to_id"));
+				pickingLin.setUomMultiplyRate(rs.getBigDecimal("UomMultiplyRate"));
+				pickingLin.setQtyPickingEnt(rs.getBigDecimal("qtyreservedent"));
+				pickingLin.setQtyConfirmedEnt(Env.ZERO);
+				pickingLin.setQtyConfirmed(Env.ZERO);
+				pickingLin.saveEx();
+
+				// Convierto cantidades según factor a unidad de esta linea
+				if (rs.getInt("c_uom_id") != rs.getInt("c_uom_to_id")){
+					MUOM uomTo = (MUOM) pickingLin.getC_UOM();
+					pickingLin.setQtyPicking(pickingLin.getQtyPickingEnt().multiply(pickingLin.getUomMultiplyRate()).setScale(uomTo.getStdPrecision(), RoundingMode.HALF_UP));
+				}
+				else{
+					pickingLin.setQtyPicking(pickingLin.getQtyPickingEnt());
+				}
+				pickingLin.saveEx();
+
+				// Actualizo cantidades totalizando en el producto
+				pickingProd.setQtyPicking(pickingProd.getQtyPicking().add(pickingLin.getQtyPicking()));
+				pickingProd.setQtyPickingEnt(pickingProd.getQtyPickingEnt().add(pickingLin.getQtyPickingEnt()));
+				pickingProd.saveEx();
+			}
+		}
+		catch (Exception e){
+			throw new AdempiereException(e);
+		}
+		finally {
+			DB.close(rs, pstmt);
+			rs = null; pstmt = null;
+		}
+	}
+
+	/***
+	 * Obtiene condiciones para obtener información de documentos a considerar en este proceso.
+	 * Xpande. Created by Gabriel Vila on 8/1/20.
+	 * @return
+	 */
+	private String getWhereDocuments(){
+		try{
+			String filtroATRs = this.getFiltroATRs();
+			String filtroSocios = this.getFiltroSocios();
+
+			if ((filtroATRs == null) && (filtroSocios == null)){
+				return null;
+			}
+
+			if ((filtroATRs != null) && (filtroSocios == null)){
+				return " AND " + filtroATRs;
+			}
+			if ((filtroATRs == null) && (filtroSocios != null)){
+				return " AND " + filtroSocios;
+			}
+			if ((filtroATRs != null) && (filtroSocios != null)){
+				return " AND ((" + filtroATRs + ") OR (" + filtroSocios + "))";
+			}
+
+		}
+		catch (Exception e){
+			throw new AdempiereException(e);
+		}
+		return null;
+	}
+
+	/**
+	 * Obtiene y retorna modelo de producto asociado a picking.
+	 * @param mProductID
+	 * @return
+	 */
+	private MZPickingProd getPickingProd(int mProductID) {
+
+		String whereClause = X_Z_PickingProd.COLUMNNAME_Z_Picking_ID + " =" + this.get_ID() +
+				" AND " + X_Z_PickingProd.COLUMNNAME_M_Product_ID + " =" + mProductID;
+
+		MZPickingProd model = new Query(getCtx(), I_Z_PickingProd.Table_Name, whereClause, get_TrxName()).first();
+
+		return model;
+	}
+
+	/**
+	 * Obtiene y retorna modelo de socio de negocio asociado a picking
+	 * @param cBPartnerID
+	 * @return
+	 */
+	private MZPickingBPView getPickingBP(int cBPartnerID) {
+
+		String whereClause = X_Z_PickingBPView.COLUMNNAME_Z_Picking_ID + " =" + this.get_ID() +
+				" AND " + X_Z_PickingBPView.COLUMNNAME_C_BPartner_ID + " =" + cBPartnerID;
+
+		MZPickingBPView model = new Query(getCtx(), I_Z_PickingBPView.Table_Name, whereClause, get_TrxName()).first();
+
+		return model;
+	}
+
+	/***
+	 * Obtiene filtro de socios de negocio a aplicar para obtener documentos.
+	 * Xpande. Created by Gabriel Vila on 12/5/19.
+	 * @return
+	 */
+	private String getFiltroSocios() {
+
+		String whereClause = null;
+
+		try{
+			// Verifico si tengo socios de negocio para filtrar
+			String sql = " select count(*) from Z_PickingFiltBP where z_picking_id =" + this.get_ID();
+			int contador = DB.getSQLValue(get_TrxName(), sql);
+
+			// Si no tengo, no hago nada
+			if (contador <= 0){
+				return null;
+			}
+			// Tengo socios de negocio para filtrar
+			whereClause = " rvta.c_bpartner_id IN (select c_bpartner_id from Z_PickingFiltBP where z_picking_id =" + this.get_ID() + ") ";
+		}
+		catch (Exception e){
+			throw new AdempiereException(e);
+		}
+
+		return whereClause;
+	}
+
+	/***
+	 * Obtiene filtro de asignaciones de transporte a aplicar para obtener documentos.
+	 * Xpande. Created by Gabriel Vila on 12/5/19.
+	 * @return
+	 */
+	private String getFiltroATRs() {
+
+		String whereClause = null;
+
+		try{
+			// Verifico si tengo datos para filtrar
+			String sql = " select count(*) from Z_PickingFiltAtr where z_picking_id =" + this.get_ID();
+			int contador = DB.getSQLValue(get_TrxName(), sql);
+
+			// Si no tengo, no hago nada
+			if (contador <= 0){
+				return null;
+			}
+			// Tengo socios de negocio para filtrar
+			whereClause = " rvta.z_asignalogtr_id IN (select c_bpartner_id from Z_PickingFiltAtr where z_picking_id =" + this.get_ID() + ") ";
+		}
+		catch (Exception e){
+			throw new AdempiereException(e);
+		}
+
+		return whereClause;
+	}
+
 }

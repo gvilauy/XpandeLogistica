@@ -575,7 +575,7 @@ public class MZAsignaTrLog extends X_Z_AsignaTrLog implements DocAction, DocOpti
 
 			// Filtro de Regiones de Venta
 			String filtroRegiones = this.getFiltroRegiones();
-			if (filtroSocios != null){
+			if (filtroRegiones != null){
 				whereClause += " AND " + filtroRegiones;
 			}
 		}

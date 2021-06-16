@@ -23,7 +23,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for Z_AsignaTrLog
  *  @author Adempiere (generated) 
- *  @version Release 3.9.0
+ *  @version Release 3.9.1
  */
 public interface I_Z_AsignaTrLog 
 {
@@ -339,12 +339,12 @@ public interface I_Z_AsignaTrLog
     public static final String COLUMNNAME_TextoFiltro2 = "TextoFiltro2";
 
 	/** Set TextoFiltro2.
-	  * Texto genérico 2 para filtro de valores
+	  * Texto genérico para filtro de valores
 	  */
 	public void setTextoFiltro2 (String TextoFiltro2);
 
 	/** Get TextoFiltro2.
-	  * Texto genérico 2 para filtro de valores
+	  * Texto genérico para filtro de valores
 	  */
 	public String getTextoFiltro2();
 
@@ -394,6 +394,17 @@ public interface I_Z_AsignaTrLog
 
 	/** Get Z_CanalVenta ID	  */
 	public int getZ_CanalVenta_ID();
+
+    /** Column name Z_Picking_ID */
+    public static final String COLUMNNAME_Z_Picking_ID = "Z_Picking_ID";
+
+	/** Set Z_Picking ID	  */
+	public void setZ_Picking_ID (int Z_Picking_ID);
+
+	/** Get Z_Picking ID	  */
+	public int getZ_Picking_ID();
+
+	public I_Z_Picking getZ_Picking() throws RuntimeException;
 
     /** Column name Z_TransporteLog_ID */
     public static final String COLUMNNAME_Z_TransporteLog_ID = "Z_TransporteLog_ID";

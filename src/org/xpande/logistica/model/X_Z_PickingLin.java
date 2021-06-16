@@ -26,14 +26,14 @@ import org.compiere.util.Env;
 
 /** Generated Model for Z_PickingLin
  *  @author Adempiere (generated) 
- *  @version Release 3.9.0 - $Id$ */
+ *  @version Release 3.9.1 - $Id$ */
 public class X_Z_PickingLin extends PO implements I_Z_PickingLin, I_Persistent 
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20200812L;
+	private static final long serialVersionUID = 20210616L;
 
     /** Standard Constructor */
     public X_Z_PickingLin (Properties ctx, int Z_PickingLin_ID, String trxName)
@@ -52,6 +52,8 @@ public class X_Z_PickingLin extends PO implements I_Z_PickingLin, I_Persistent
 			setDateReserved (new Timestamp( System.currentTimeMillis() ));
 			setM_Product_ID (0);
 			setName (null);
+			setQtyConfirmed (Env.ZERO);
+			setQtyPicking (Env.ZERO);
 			setQtyPickingEnt (Env.ZERO);
 			setUomMultiplyRate (Env.ZERO);
 			setZ_Picking_ID (0);
@@ -353,6 +355,26 @@ public class X_Z_PickingLin extends PO implements I_Z_PickingLin, I_Persistent
 		return (String)get_Value(COLUMNNAME_Name);
 	}
 
+	/** Set QtyConfirmed.
+		@param QtyConfirmed 
+		Cantidad de unidades confirmadas expresadas en la unidad simple del producto
+	  */
+	public void setQtyConfirmed (BigDecimal QtyConfirmed)
+	{
+		set_Value (COLUMNNAME_QtyConfirmed, QtyConfirmed);
+	}
+
+	/** Get QtyConfirmed.
+		@return Cantidad de unidades confirmadas expresadas en la unidad simple del producto
+	  */
+	public BigDecimal getQtyConfirmed () 
+	{
+		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_QtyConfirmed);
+		if (bd == null)
+			 return Env.ZERO;
+		return bd;
+	}
+
 	/** Set QtyConfirmedEnt.
 		@param QtyConfirmedEnt 
 		Cantidad de unidades confirmadas expresadas en unidad de medida
@@ -368,6 +390,26 @@ public class X_Z_PickingLin extends PO implements I_Z_PickingLin, I_Persistent
 	public BigDecimal getQtyConfirmedEnt () 
 	{
 		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_QtyConfirmedEnt);
+		if (bd == null)
+			 return Env.ZERO;
+		return bd;
+	}
+
+	/** Set QtyPicking.
+		@param QtyPicking 
+		Cantidad de unidades pickeadas expresadas en la unidad simple del producto
+	  */
+	public void setQtyPicking (BigDecimal QtyPicking)
+	{
+		set_Value (COLUMNNAME_QtyPicking, QtyPicking);
+	}
+
+	/** Get QtyPicking.
+		@return Cantidad de unidades pickeadas expresadas en la unidad simple del producto
+	  */
+	public BigDecimal getQtyPicking () 
+	{
+		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_QtyPicking);
 		if (bd == null)
 			 return Env.ZERO;
 		return bd;

@@ -23,7 +23,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for Z_PickingLin
  *  @author Adempiere (generated) 
- *  @version Release 3.9.0
+ *  @version Release 3.9.1
  */
 public interface I_Z_PickingLin 
 {
@@ -249,6 +249,19 @@ public interface I_Z_PickingLin
 	  */
 	public String getName();
 
+    /** Column name QtyConfirmed */
+    public static final String COLUMNNAME_QtyConfirmed = "QtyConfirmed";
+
+	/** Set QtyConfirmed.
+	  * Cantidad de unidades confirmadas expresadas en la unidad simple del producto
+	  */
+	public void setQtyConfirmed (BigDecimal QtyConfirmed);
+
+	/** Get QtyConfirmed.
+	  * Cantidad de unidades confirmadas expresadas en la unidad simple del producto
+	  */
+	public BigDecimal getQtyConfirmed();
+
     /** Column name QtyConfirmedEnt */
     public static final String COLUMNNAME_QtyConfirmedEnt = "QtyConfirmedEnt";
 
@@ -261,6 +274,19 @@ public interface I_Z_PickingLin
 	  * Cantidad de unidades confirmadas expresadas en unidad de medida
 	  */
 	public BigDecimal getQtyConfirmedEnt();
+
+    /** Column name QtyPicking */
+    public static final String COLUMNNAME_QtyPicking = "QtyPicking";
+
+	/** Set QtyPicking.
+	  * Cantidad de unidades pickeadas expresadas en la unidad simple del producto
+	  */
+	public void setQtyPicking (BigDecimal QtyPicking);
+
+	/** Get QtyPicking.
+	  * Cantidad de unidades pickeadas expresadas en la unidad simple del producto
+	  */
+	public BigDecimal getQtyPicking();
 
     /** Column name QtyPickingEnt */
     public static final String COLUMNNAME_QtyPickingEnt = "QtyPickingEnt";

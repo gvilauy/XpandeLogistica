@@ -450,9 +450,9 @@ public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
 			}
 
 			// Query
-			sql = "  SELECT rvta.z_reservaventa_id, rvta.c_order_id, rvtal.c_orderline_id, " +
-					" rvta.dateordered, rvta.z_asignatrlog_id, o.c_doctypetarget_id AS c_doctype_id, " +
-					" o.documentno, o.c_bpartner_id, o.c_bpartner_location_id, o.c_currency_id," +
+			sql = "  SELECT rvta.z_reservavta_id, rvta.c_order_id, rvtal.c_orderline_id, prod.value, prod.name as prodname, " +
+					" rvta.dateordered, rvta.datedoc as datereserved, coalesce(rvta.z_asignatrlog_id, 0) as z_asignatrlog_id, o.c_doctypetarget_id AS c_doctype_id, " +
+					" o.documentno, rvta.c_bpartner_id, o.c_bpartner_location_id, o.c_currency_id," +
 					" o.salesrep_id, o.poreference, o.datepromised, rvtal.m_product_id, rvtal.c_uom_id, prod.c_uom_id AS c_uom_to_id, " +
 					" COALESCE(rvtal.uommultiplyrate, 1::numeric) AS uommultiplyrate, rvtal.qtyreserved, rvtal.qtyreservedent, " +
 					" rvta.m_warehouse_id, bpl.c_salesregion_id" +
@@ -473,7 +473,10 @@ public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
 			pstmt = DB.prepareStatement(sql, get_TrxName());
 			rs = pstmt.executeQuery();
 
+			int seqNo = 0;
 			while(rs.next()){
+
+				seqNo = seqNo + 10;
 
 				// Corte por producto
 				if (rs.getInt("m_product_id") != mProductIDAux){
@@ -492,6 +495,9 @@ public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
 						pickingProd.setQtyPickingEnt(Env.ZERO);
 						pickingProd.setQtyConfirmed(Env.ZERO);
 						pickingProd.setQtyConfirmedEnt(Env.ZERO);
+						pickingProd.setCodigoProducto(rs.getString("value"));
+						pickingProd.setName(rs.getString("prodname"));
+						pickingProd.setSeqNo(seqNo);
 						pickingProd.saveEx();
 					}
 				}
@@ -535,6 +541,18 @@ public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
 				pickingLin.setQtyPickingEnt(rs.getBigDecimal("qtyreservedent"));
 				pickingLin.setQtyConfirmedEnt(Env.ZERO);
 				pickingLin.setQtyConfirmed(Env.ZERO);
+				pickingLin.setZ_ReservaVta_ID(rs.getInt("Z_ReservaVta_ID"));
+				pickingLin.setDateReserved(rs.getTimestamp("DateReserved"));
+				pickingLin.setCodigoProducto(rs.getString("value"));
+				pickingLin.setName(rs.getString("prodname"));
+				pickingLin.setQtyPicking(rs.getBigDecimal("qtyreserved"));
+				pickingLin.setQtyPickingEnt(rs.getBigDecimal("qtyreservedent"));
+				if ((pickingBP != null) && (pickingBP.get_ID() > 0)){
+					pickingLin.setZ_PickingBPView_ID(pickingBP.get_ID());
+				}
+				if (rs.getInt("Z_AsignaTrLog_ID") > 0){
+					pickingLin.setZ_AsignaTrLog_ID(rs.getInt("Z_AsignaTrLog_ID"));
+				}
 				pickingLin.saveEx();
 
 				// Convierto cantidades según factor a unidad de esta linea
@@ -670,7 +688,7 @@ public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
 				return null;
 			}
 			// Tengo socios de negocio para filtrar
-			whereClause = " rvta.z_asignalogtr_id IN (select c_bpartner_id from Z_PickingFiltAtr where z_picking_id =" + this.get_ID() + ") ";
+			whereClause = " rvta.z_asignatrlog_id IN (select z_asignatrlog_id from Z_PickingFiltAtr where z_picking_id =" + this.get_ID() + ") ";
 		}
 		catch (Exception e){
 			throw new AdempiereException(e);

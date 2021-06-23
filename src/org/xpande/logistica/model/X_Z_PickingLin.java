@@ -33,7 +33,7 @@ public class X_Z_PickingLin extends PO implements I_Z_PickingLin, I_Persistent
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20210616L;
+	private static final long serialVersionUID = 20210622L;
 
     /** Standard Constructor */
     public X_Z_PickingLin (Properties ctx, int Z_PickingLin_ID, String trxName)
@@ -607,6 +607,26 @@ public class X_Z_PickingLin extends PO implements I_Z_PickingLin, I_Persistent
 	public int getZ_ReservaVta_ID () 
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_Z_ReservaVta_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
+	/** Set Z_ReservaVtaLin ID.
+		@param Z_ReservaVtaLin_ID Z_ReservaVtaLin ID	  */
+	public void setZ_ReservaVtaLin_ID (int Z_ReservaVtaLin_ID)
+	{
+		if (Z_ReservaVtaLin_ID < 1) 
+			set_Value (COLUMNNAME_Z_ReservaVtaLin_ID, null);
+		else 
+			set_Value (COLUMNNAME_Z_ReservaVtaLin_ID, Integer.valueOf(Z_ReservaVtaLin_ID));
+	}
+
+	/** Get Z_ReservaVtaLin ID.
+		@return Z_ReservaVtaLin ID	  */
+	public int getZ_ReservaVtaLin_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_Z_ReservaVtaLin_ID);
 		if (ii == null)
 			 return 0;
 		return ii.intValue();

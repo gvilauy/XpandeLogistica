@@ -22,7 +22,6 @@ import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
-import java.util.List;
 import java.util.Properties;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -32,26 +31,25 @@ import org.compiere.process.DocOptions;
 import org.compiere.process.DocumentEngine;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
-import org.xpande.comercial.model.*;
 
-/** Generated Model for Z_Picking
+/** Generated Model for Z_MassiveInv
  *  @author Adempiere (generated) 
- *  @version Release 3.9.0 - $Id$ */
-public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
+ *  @version Release 3.9.1 - $Id$ */
+public class MZMassiveInv extends X_Z_MassiveInv implements DocAction, DocOptions {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20200812L;
+	private static final long serialVersionUID = 20210622L;
 
     /** Standard Constructor */
-    public MZPicking (Properties ctx, int Z_Picking_ID, String trxName)
+    public MZMassiveInv (Properties ctx, int Z_MassiveInv_ID, String trxName)
     {
-      super (ctx, Z_Picking_ID, trxName);
+      super (ctx, Z_MassiveInv_ID, trxName);
     }
 
     /** Load Constructor */
-    public MZPicking (Properties ctx, ResultSet rs, String trxName)
+    public MZMassiveInv (Properties ctx, ResultSet rs, String trxName)
     {
       super (ctx, rs, trxName);
     }
@@ -70,11 +68,10 @@ public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
 		}
 		else if (docStatus.equalsIgnoreCase(STATUS_Completed)){
 
-			//options[newIndex++] = DocumentEngine.ACTION_None;
-			options[newIndex++] = DocumentEngine.ACTION_ReActivate;
+			options[newIndex++] = DocumentEngine.ACTION_None;
+			//options[newIndex++] = DocumentEngine.ACTION_ReActivate;
 			//options[newIndex++] = DocumentEngine.ACTION_Void;
 		}
-
 		return newIndex;
 	}
 
@@ -236,20 +233,7 @@ public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
 			approveIt();
 		log.info(toString());
 		//
-
-		List<MZPickingLin> pickingLinList = this.getLines();
-		for (MZPickingLin pickingLin: pickingLinList){
-			MZReservaVta reservaVta = new MZReservaVta(getCtx(), pickingLin.getZ_ReservaVta_ID(), get_TrxName());
-			reservaVta.setZ_Picking_ID(this.get_ID());
-			reservaVta.saveEx();
-
-			if (pickingLin.getZ_AsignaTrLog_ID() > 0){
-				MZAsignaTrLog asignaTrLog = (MZAsignaTrLog) pickingLin.getZ_AsignaTrLog();
-				asignaTrLog.setZ_Picking_ID(this.get_ID());
-				asignaTrLog.saveEx();
-			}
-		}
-
+		
 		//	User Validation
 		String valid = ModelValidationEngine.get().fireDocValidate(this, ModelValidator.TIMING_AFTER_COMPLETE);
 		if (valid != null)
@@ -404,7 +388,7 @@ public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
     @Override
     public String toString()
     {
-      StringBuffer sb = new StringBuffer ("MZPicking[")
+      StringBuffer sb = new StringBuffer ("MZMassiveInv[")
         .append(getSummary()).append("]");
       return sb.toString();
     }
@@ -434,10 +418,7 @@ public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
 
 		String action = "";
 		try{
-			action = " delete from Z_PickingBPView cascade where z_picking_id =" + this.get_ID();
-			DB.executeUpdateEx(action, get_TrxName());
-
-			action = " delete from Z_PickingProd cascade where z_picking_id =" + this.get_ID();
+			action = " delete from Z_MassiveInvLine where z_massiveinv_id =" + this.get_ID();
 			DB.executeUpdateEx(action, get_TrxName());
 		}
 		catch (Exception e){
@@ -460,13 +441,12 @@ public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
 		try{
 			String whereClause = this.getWhereDocuments();
 			if (whereClause == null){
-				throw new AdempiereException("Se debe indicar Asignaciones de Transporte y/o Socios de Negocio a Procesar");
+				throw new AdempiereException("Se debe indicar Asignaciones de Transporte, Socios de Negocio o Pickings a Procesar");
 			}
-
 			// Query
 			sql = "  SELECT rvta.z_reservavta_id, rvta.c_order_id, rvtal.c_orderline_id, prod.value, prod.name as prodname, " +
 					" rvta.dateordered, rvta.datedoc as datereserved, coalesce(rvta.z_asignatrlog_id, 0) as z_asignatrlog_id, o.c_doctypetarget_id AS c_doctype_id, " +
-					" o.documentno, rvta.c_bpartner_id, o.c_bpartner_location_id, o.c_currency_id," +
+					" o.documentno, rvta.c_bpartner_id, o.c_bpartner_location_id, o.c_currency_id, rvta.z_picking_id, " +
 					" o.salesrep_id, o.poreference, o.datepromised, rvtal.m_product_id, rvtal.z_reservavtalin_id, rvtal.c_uom_id, prod.c_uom_id AS c_uom_to_id, " +
 					" COALESCE(rvtal.uommultiplyrate, 1::numeric) AS uommultiplyrate, rvtal.qtyreserved, rvtal.qtyreservedent, " +
 					" rvta.m_warehouse_id, bpl.c_salesregion_id" +
@@ -477,113 +457,28 @@ public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
 					" JOIN c_bpartner_location bpl ON o.c_bpartner_location_id = bpl.c_bpartner_location_id " +
 					" JOIN m_product prod ON ol.m_product_id = prod.m_product_id " +
 					" left outer join z_asignatrlog atr on (rvta.z_asignatrlog_id = atr.z_asignatrlog_id and atr.z_picking_id is null) " +
-					" WHERE rvta.docstatus = 'CO' " + whereClause +
-					" order by rvtal.m_product_id, rvta.dateordered, rvta.c_order_id ";
-
-			int mProductIDAux = 0;
-			MZPickingProd pickingProd = null;
-			MZPickingBPView pickingBP = null;
+					" WHERE rvta.docstatus = 'CO' " +
+					" AND rvta.z_picking_id is not null " + whereClause;
 
 			pstmt = DB.prepareStatement(sql, get_TrxName());
 			rs = pstmt.executeQuery();
 
-			int seqNo = 0;
 			while(rs.next()){
-
-				seqNo = seqNo + 10;
-
-				// Corte por producto
-				if (rs.getInt("m_product_id") != mProductIDAux){
-
-					mProductIDAux = rs.getInt("m_product_id");
-
-					// Obtengo modelo de producto a considerar, si ya existe.
-					// Si no existe lo creo ahora
-					pickingProd = this.getPickingProd(mProductIDAux);
-					if ((pickingProd == null) || (pickingProd.get_ID() <= 0)){
-						pickingProd = new MZPickingProd(getCtx(), 0, get_TrxName());
-						pickingProd.setZ_Picking_ID(this.get_ID());
-						pickingProd.setM_Product_ID(mProductIDAux);
-						pickingProd.setC_UOM_ID(rs.getInt("c_uom_to_id"));
-						pickingProd.setQtyPicking(Env.ZERO);
-						pickingProd.setQtyPickingEnt(Env.ZERO);
-						pickingProd.setQtyConfirmed(Env.ZERO);
-						pickingProd.setQtyConfirmedEnt(Env.ZERO);
-						pickingProd.setCodigoProducto(rs.getString("value"));
-						pickingProd.setName(rs.getString("prodname"));
-						pickingProd.setSeqNo(seqNo);
-						pickingProd.saveEx();
-					}
+				MZMassiveInvLine massiveInvLine = new MZMassiveInvLine(getCtx(), 0, get_TrxName());
+				massiveInvLine.setZ_MassiveInv_ID(this.get_ID());
+				massiveInvLine.setZ_Picking_ID(rs.getInt("z_picking_id"));
+				massiveInvLine.setZ_ReservaVta_ID(rs.getInt("z_reservavta_id"));
+				if (rs.getInt("z_asignatrlog_id") > 0){
+					massiveInvLine.setZ_AsignaTrLog_ID(rs.getInt("z_asignatrlog_id"));
 				}
-				// Si se indica tipo de proceso por Socio de negocio
-				if (this.getTipoPicking().equalsIgnoreCase(X_Z_Picking.TIPOPICKING_SOCIODENEGOCIO)){
-					// Obtengo modelo de socio a considerar, si ya existe
-					// Si no existe lo creo ahora
-					pickingBP = this.getPickingBP(rs.getInt("c_bpartner_id"));
-					if ((pickingBP == null) || (pickingBP.get_ID() <= 0)){
-						MBPartner partner = new MBPartner(getCtx(), rs.getInt("c_bpartner_id"), null);
-						pickingBP = new MZPickingBPView(getCtx(), 0, get_TrxName());
-						pickingBP.setZ_Picking_ID(this.get_ID());
-						pickingBP.setC_BPartner_ID(rs.getInt("c_bpartner_id"));
-						pickingBP.setTaxID(partner.getTaxID());
-
-						if (partner.get_ValueAsInt("Z_CanalVenta_ID") > 0){
-							pickingBP.setZ_CanalVenta_ID(partner.get_ValueAsInt("Z_CanalVenta_ID"));
-						}
-						pickingBP.saveEx();
-					}
-				}
-
-				MZPickingLin pickingLin = new MZPickingLin(getCtx(), 0, get_TrxName());
-				pickingLin.setZ_Picking_ID(this.get_ID());
-				pickingLin.setZ_PickingProd_ID(pickingProd.get_ID());
-
-				if (pickingBP != null){
-					pickingLin.setZ_PickingBPView_ID(pickingBP.get_ID());
-				}
-
-				pickingLin.setAD_Org_ID(this.getAD_Org_ID());
-				pickingLin.setC_Order_ID(rs.getInt("c_order_id"));
-				pickingLin.setC_OrderLine_ID(rs.getInt("c_orderline_id"));
-				pickingLin.setC_BPartner_ID(rs.getInt("c_bpartner_id"));
-				pickingLin.setC_BPartner_Location_ID(rs.getInt("c_bpartner_location_id"));
-				pickingLin.setDateOrdered(rs.getTimestamp("dateordered"));
-				pickingLin.setM_Product_ID(rs.getInt("m_product_id"));
-				pickingLin.setC_UOM_ID(rs.getInt("c_uom_id"));
-				pickingLin.setC_UOM_To_ID(rs.getInt("c_uom_to_id"));
-				pickingLin.setUomMultiplyRate(rs.getBigDecimal("UomMultiplyRate"));
-				pickingLin.setQtyPickingEnt(rs.getBigDecimal("qtyreservedent"));
-				pickingLin.setQtyConfirmedEnt(Env.ZERO);
-				pickingLin.setQtyConfirmed(Env.ZERO);
-				pickingLin.setZ_ReservaVta_ID(rs.getInt("Z_ReservaVta_ID"));
-				pickingLin.setZ_ReservaVtaLin_ID(rs.getInt("Z_ReservaVtaLin_ID"));
-				pickingLin.setDateReserved(rs.getTimestamp("DateReserved"));
-				pickingLin.setCodigoProducto(rs.getString("value"));
-				pickingLin.setName(rs.getString("prodname"));
-				pickingLin.setQtyPicking(rs.getBigDecimal("qtyreserved"));
-				pickingLin.setQtyPickingEnt(rs.getBigDecimal("qtyreservedent"));
-				if ((pickingBP != null) && (pickingBP.get_ID() > 0)){
-					pickingLin.setZ_PickingBPView_ID(pickingBP.get_ID());
-				}
-				if (rs.getInt("Z_AsignaTrLog_ID") > 0){
-					pickingLin.setZ_AsignaTrLog_ID(rs.getInt("Z_AsignaTrLog_ID"));
-				}
-				pickingLin.saveEx();
-
-				// Convierto cantidades según factor a unidad de esta linea
-				if (rs.getInt("c_uom_id") != rs.getInt("c_uom_to_id")){
-					MUOM uomTo = (MUOM) pickingLin.getC_UOM();
-					pickingLin.setQtyPicking(pickingLin.getQtyPickingEnt().multiply(pickingLin.getUomMultiplyRate()).setScale(uomTo.getStdPrecision(), RoundingMode.HALF_UP));
-				}
-				else{
-					pickingLin.setQtyPicking(pickingLin.getQtyPickingEnt());
-				}
-				pickingLin.saveEx();
-
-				// Actualizo cantidades totalizando en el producto
-				pickingProd.setQtyPicking(pickingProd.getQtyPicking().add(pickingLin.getQtyPicking()));
-				pickingProd.setQtyPickingEnt(pickingProd.getQtyPickingEnt().add(pickingLin.getQtyPickingEnt()));
-				pickingProd.saveEx();
+				massiveInvLine.setC_BPartner_ID(rs.getInt("c_bpartner_id"));
+				massiveInvLine.setC_Order_ID(rs.getInt("c_order_id"));
+				massiveInvLine.setDateOrdered(rs.getTimestamp("dateordered"));
+				massiveInvLine.setC_BPartner_Location_ID(rs.getInt("c_bpartner_location_id"));
+				massiveInvLine.setC_Currency_ID(rs.getInt("c_currency_id"));
+				massiveInvLine.setDateReserved(rs.getTimestamp("datereserved"));
+				massiveInvLine.setIsSelected(false);
+				massiveInvLine.saveEx();
 			}
 		}
 		catch (Exception e){
@@ -604,56 +499,39 @@ public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
 		try{
 			String filtroATRs = this.getFiltroATRs();
 			String filtroSocios = this.getFiltroSocios();
+			String filtroPickings= this.getFiltroPickings();
 
-			if ((filtroATRs == null) && (filtroSocios == null)){
+			if ((filtroATRs == null) && (filtroSocios == null) && (filtroPickings == null)){
 				return null;
 			}
 
-			if ((filtroATRs != null) && (filtroSocios == null)){
+			if ((filtroATRs != null) && (filtroSocios == null) && (filtroPickings == null)){
 				return " AND " + filtroATRs;
 			}
-			if ((filtroATRs == null) && (filtroSocios != null)){
+			if ((filtroATRs == null) && (filtroSocios != null) && (filtroPickings == null)){
 				return " AND " + filtroSocios;
 			}
-			if ((filtroATRs != null) && (filtroSocios != null)){
-				return " AND ((" + filtroATRs + ") OR (" + filtroSocios + "))";
+			if ((filtroATRs == null) && (filtroSocios == null) && (filtroPickings != null)){
+				return " AND " + filtroPickings;
 			}
 
+			if ((filtroATRs != null) && (filtroSocios != null) && (filtroPickings == null)){
+				return " AND ((" + filtroATRs + ") OR (" + filtroSocios + "))";
+			}
+			if ((filtroATRs != null) && (filtroSocios == null) && (filtroPickings != null)){
+				return " AND ((" + filtroATRs + ") OR (" + filtroPickings + "))";
+			}
+			if ((filtroATRs == null) && (filtroSocios != null) && (filtroPickings != null)){
+				return " AND ((" + filtroSocios + ") OR (" + filtroPickings + "))";
+			}
+			if ((filtroATRs != null) && (filtroSocios != null) && (filtroPickings != null)){
+				return " AND ((" + filtroATRs + ") OR (" + filtroSocios + ") OR (" + filtroPickings + "))";
+			}
 		}
 		catch (Exception e){
 			throw new AdempiereException(e);
 		}
 		return null;
-	}
-
-	/**
-	 * Obtiene y retorna modelo de producto asociado a picking.
-	 * @param mProductID
-	 * @return
-	 */
-	private MZPickingProd getPickingProd(int mProductID) {
-
-		String whereClause = X_Z_PickingProd.COLUMNNAME_Z_Picking_ID + " =" + this.get_ID() +
-				" AND " + X_Z_PickingProd.COLUMNNAME_M_Product_ID + " =" + mProductID;
-
-		MZPickingProd model = new Query(getCtx(), I_Z_PickingProd.Table_Name, whereClause, get_TrxName()).first();
-
-		return model;
-	}
-
-	/**
-	 * Obtiene y retorna modelo de socio de negocio asociado a picking
-	 * @param cBPartnerID
-	 * @return
-	 */
-	private MZPickingBPView getPickingBP(int cBPartnerID) {
-
-		String whereClause = X_Z_PickingBPView.COLUMNNAME_Z_Picking_ID + " =" + this.get_ID() +
-				" AND " + X_Z_PickingBPView.COLUMNNAME_C_BPartner_ID + " =" + cBPartnerID;
-
-		MZPickingBPView model = new Query(getCtx(), I_Z_PickingBPView.Table_Name, whereClause, get_TrxName()).first();
-
-		return model;
 	}
 
 	/***
@@ -667,7 +545,7 @@ public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
 
 		try{
 			// Verifico si tengo socios de negocio para filtrar
-			String sql = " select count(*) from Z_PickingFiltBP where z_picking_id =" + this.get_ID();
+			String sql = " select count(*) from Z_MassiveInvFiltBP where z_massiveinv_id =" + this.get_ID();
 			int contador = DB.getSQLValue(get_TrxName(), sql);
 
 			// Si no tengo, no hago nada
@@ -675,7 +553,7 @@ public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
 				return null;
 			}
 			// Tengo socios de negocio para filtrar
-			whereClause = " rvta.c_bpartner_id IN (select c_bpartner_id from Z_PickingFiltBP where z_picking_id =" + this.get_ID() + ") ";
+			whereClause = " rvta.c_bpartner_id IN (select c_bpartner_id from Z_MassiveInvFiltBP where z_massiveinv_id =" + this.get_ID() + ") ";
 		}
 		catch (Exception e){
 			throw new AdempiereException(e);
@@ -695,15 +573,15 @@ public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
 
 		try{
 			// Verifico si tengo datos para filtrar
-			String sql = " select count(*) from Z_PickingFiltAtr where z_picking_id =" + this.get_ID();
+			String sql = " select count(*) from Z_MassiveInvFiltAtr where z_massiveinv_id =" + this.get_ID();
 			int contador = DB.getSQLValue(get_TrxName(), sql);
 
 			// Si no tengo, no hago nada
 			if (contador <= 0){
 				return null;
 			}
-			// Tengo socios de negocio para filtrar
-			whereClause = " rvta.z_asignatrlog_id IN (select z_asignatrlog_id from Z_PickingFiltAtr where z_picking_id =" + this.get_ID() + ") ";
+			// Tengo datos para filtrar
+			whereClause = " rvta.z_asignatrlog_id IN (select z_asignatrlog_id from Z_MassiveInvFiltAtr where z_massiveinv_id =" + this.get_ID() + ") ";
 		}
 		catch (Exception e){
 			throw new AdempiereException(e);
@@ -712,16 +590,31 @@ public class MZPicking extends X_Z_Picking implements DocAction, DocOptions {
 		return whereClause;
 	}
 
-	/**
-	 * Obtiene y retorna lineas de este documento.
+	/***
+	 * Obtiene filtro de pickings a aplicar para obtener documentos.
+	 * Xpande. Created by Gabriel Vila on 12/5/19.
 	 * @return
 	 */
-	public List<MZPickingLin> getLines(){
+	private String getFiltroPickings() {
 
-		String whereClause = X_Z_PickingLin.COLUMNNAME_Z_Picking_ID + " =" + this.get_ID();
+		String whereClause = null;
 
-		List<MZPickingLin> lines = new Query(getCtx(), I_Z_PickingLin.Table_Name, whereClause, get_TrxName()).list();
+		try{
+			// Verifico si tengo datos para filtrar
+			String sql = " select count(*) from Z_MassiveInvFiltPick where z_massiveinv_id =" + this.get_ID();
+			int contador = DB.getSQLValue(get_TrxName(), sql);
 
-		return lines;
+			// Si no tengo, no hago nada
+			if (contador <= 0){
+				return null;
+			}
+			// Tengo datos para filtrar
+			whereClause = " rvta.z_picking_id IN (select z_picking_id from Z_MassiveInvFiltPick where z_massiveinv_id =" + this.get_ID() + ") ";
+		}
+		catch (Exception e){
+			throw new AdempiereException(e);
+		}
+
+		return whereClause;
 	}
 }

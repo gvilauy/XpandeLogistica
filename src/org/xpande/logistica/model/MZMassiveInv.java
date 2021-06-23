@@ -444,18 +444,12 @@ public class MZMassiveInv extends X_Z_MassiveInv implements DocAction, DocOption
 				throw new AdempiereException("Se debe indicar Asignaciones de Transporte, Socios de Negocio o Pickings a Procesar");
 			}
 			// Query
-			sql = "  SELECT rvta.z_reservavta_id, rvta.c_order_id, rvtal.c_orderline_id, prod.value, prod.name as prodname, " +
-					" rvta.dateordered, rvta.datedoc as datereserved, coalesce(rvta.z_asignatrlog_id, 0) as z_asignatrlog_id, o.c_doctypetarget_id AS c_doctype_id, " +
-					" o.documentno, rvta.c_bpartner_id, o.c_bpartner_location_id, o.c_currency_id, rvta.z_picking_id, " +
-					" o.salesrep_id, o.poreference, o.datepromised, rvtal.m_product_id, rvtal.z_reservavtalin_id, rvtal.c_uom_id, prod.c_uom_id AS c_uom_to_id, " +
-					" COALESCE(rvtal.uommultiplyrate, 1::numeric) AS uommultiplyrate, rvtal.qtyreserved, rvtal.qtyreservedent, " +
-					" rvta.m_warehouse_id, bpl.c_salesregion_id" +
+			sql = " SELECT rvta.z_reservavta_id, rvta.c_order_id, rvta.dateordered, rvta.datedoc as datereserved, coalesce(rvta.z_asignatrlog_id, 0) as z_asignatrlog_id, " +
+					" o.c_doctypetarget_id AS c_doctype_id,  o.documentno, rvta.c_bpartner_id, o.c_bpartner_location_id, o.c_currency_id, rvta.z_picking_id,  o.salesrep_id, " +
+					" o.poreference, o.datepromised, rvta.m_warehouse_id, bpl.c_salesregion_id " +
 					" FROM z_reservavta rvta " +
-					" join z_reservavtalin rvtal on rvta.z_reservavta_id = rvtal.z_reservavta_id " +
 					" join c_order o on rvta.c_order_id = o.c_order_id " +
-					" JOIN c_orderline ol ON rvtal.c_orderline_id = ol.c_orderline_id " +
 					" JOIN c_bpartner_location bpl ON o.c_bpartner_location_id = bpl.c_bpartner_location_id " +
-					" JOIN m_product prod ON ol.m_product_id = prod.m_product_id " +
 					" left outer join z_asignatrlog atr on (rvta.z_asignatrlog_id = atr.z_asignatrlog_id and atr.z_picking_id is null) " +
 					" WHERE rvta.docstatus = 'CO' " +
 					" AND rvta.z_picking_id is not null " + whereClause;
@@ -477,7 +471,8 @@ public class MZMassiveInv extends X_Z_MassiveInv implements DocAction, DocOption
 				massiveInvLine.setC_BPartner_Location_ID(rs.getInt("c_bpartner_location_id"));
 				massiveInvLine.setC_Currency_ID(rs.getInt("c_currency_id"));
 				massiveInvLine.setDateReserved(rs.getTimestamp("datereserved"));
-				massiveInvLine.setIsSelected(false);
+				massiveInvLine.setIsSelected(true);
+				massiveInvLine.setTotalAmt(Env.ZERO);
 				massiveInvLine.saveEx();
 			}
 		}

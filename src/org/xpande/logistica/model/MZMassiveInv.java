@@ -22,15 +22,19 @@ import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Properties;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.acct.Doc;
 import org.compiere.model.*;
 import org.compiere.process.DocAction;
 import org.compiere.process.DocOptions;
 import org.compiere.process.DocumentEngine;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.TimeUtil;
+import org.xpande.core.utils.PriceListUtils;
 
 /** Generated Model for Z_MassiveInv
  *  @author Adempiere (generated) 
@@ -233,7 +237,84 @@ public class MZMassiveInv extends X_Z_MassiveInv implements DocAction, DocOption
 			approveIt();
 		log.info(toString());
 		//
-		
+
+		List<MZMassiveInvLine> massiveInvLineList = this.getSelectedLines();
+		if (massiveInvLineList.size() <= 0){
+			m_processMsg = "No hay lineas marcadas para procesar";
+			return DocAction.STATUS_Invalid;
+		}
+
+		Timestamp today = TimeUtil.trunc(new Timestamp (System.currentTimeMillis()), TimeUtil.TRUNC_DAY);
+
+		/*
+		for (MZMassiveInvLine massiveInvLine: massiveInvLineList){
+			// Genero InOut siempre.
+			// La diferencia solamente esta en el documento: si se indica generar Solo Factura, entonces documento = entrega
+			// Si se indica generar remito o remito y factura, entonces documento = remito de entrega
+			// Esta diferencia en el documento tiene que ver con facturación electrónica, ya que los remitos de entrega son electrónicos
+			// y debe llevar el consecutivo en la numeración, mientras que las entregas normales no.
+
+			// Hago la factura si es necesario
+			if (!this.getTypeMassiveInv().equalsIgnoreCase(X_Z_MassiveInv.TYPEMASSIVEINV_SOLOREMITO)){
+				MInvoice invoice = new MInvoice(getCtx(), 0, get_TrxName());
+				invoice.setAD_Org_ID(this.getAD_Org_ID());
+				invoice.setIsSOTrx(true);
+				invoice.setC_DocTypeTarget_ID(cDocTypeID);
+				invoice.setC_DocType_ID(cDocTypeID);
+				invoice.setDateInvoiced(today);
+				invoice.setDateAcct(today);
+				invoice.setC_BPartner_ID(massiveInvLine.getC_BPartner_ID());
+				invoice.setC_BPartner_Location_ID(massiveInvLine.getC_BPartner_Location_ID());
+				invoice.setC_Currency_ID(massiveInvLine.getC_Currency_ID());
+				invoice.setPaymentRule(X_C_Invoice.PAYMENTRULE_OnCredit);
+				invoice.setC_PaymentTerm_ID(paymentTerm.get_ID());
+				invoice.setTotalLines(Env.ZERO);
+				invoice.setGrandTotal(Env.ZERO);
+
+				MPriceList priceList = PriceListUtils.getPriceListByOrg(getCtx(), invoice.getAD_Client_ID(), invoice.getAD_Org_ID(),
+						invoice.getC_Currency_ID(), true, null, null);
+				if ((priceList == null) || (priceList.get_ID() <= 0)){
+					continue;
+				}
+
+				invoice.setM_PriceList_ID(priceList.get_ID());
+				invoice.setIsTaxIncluded(priceList.isTaxIncluded());
+				invoice.set_ValueOfColumn("AmtSubtotal", amtTotal);
+				invoice.set_ValueOfColumn("DocBaseType", docType.getDocBaseType());
+				invoice.set_ValueOfColumn("EstadoAprobacion", "APROBADO");
+				invoice.set_ValueOfColumn("TipoFormaPago", "CREDITO");
+				invoice.saveEx();
+
+				// Linea de Factura
+				MInvoiceLine line = new MInvoiceLine(invoice);
+				line.set_ValueOfColumn("AD_Client_ID", invoice.getAD_Client_ID());
+				line.setAD_Org_ID(invoice.getAD_Org_ID());
+				line.setM_Product_ID(product.get_ID());
+				line.set_ValueOfColumn("IsBySelection", true);
+				line.setC_UOM_ID(product.getC_UOM_ID());
+				line.setQtyEntered(Env.ONE);
+				line.setQtyInvoiced(Env.ONE);
+				line.setPriceEntered(invoice.getTotalLines());
+				line.setPriceActual(invoice.getTotalLines());
+				line.setLineNetAmt(invoice.getTotalLines());
+				line.set_ValueOfColumn("AmtSubTotal", invoice.getTotalLines());
+				line.setC_Tax_ID(taxProduct.get_ID());
+				line.setTaxAmt();
+				line.setLineNetAmt();
+				line.saveEx();
+
+				if (!invoice.processIt(DocAction.ACTION_Complete)){
+					String message = "";
+					if (invoice.getProcessMsg() != null) message = invoice.getProcessMsg();
+					System.out.println("No se pudo completar Invoice en Venta Cuenta Corriente Sisteco : " + message);
+				}
+				else{
+					invoice.saveEx();
+				}
+			}
+		}
+		*/
+
 		//	User Validation
 		String valid = ModelValidationEngine.get().fireDocValidate(this, ModelValidator.TIMING_AFTER_COMPLETE);
 		if (valid != null)
@@ -611,5 +692,19 @@ public class MZMassiveInv extends X_Z_MassiveInv implements DocAction, DocOption
 		}
 
 		return whereClause;
+	}
+
+	/**
+	 * Obtiene y retorna lineas seleccionadas de este documento.
+	 * @return
+	 */
+	public List<MZMassiveInvLine> getSelectedLines(){
+
+		String whereClause = X_Z_MassiveInvLine.COLUMNNAME_Z_MassiveInv_ID + " =" + this.get_ID() +
+				" AND " + X_Z_MassiveInvLine.COLUMNNAME_IsSelected + " ='Y' ";
+
+		List<MZMassiveInvLine> lines = new Query(getCtx(), I_Z_MassiveInvLine.Table_Name, whereClause, get_TrxName()).list();
+
+		return lines;
 	}
 }

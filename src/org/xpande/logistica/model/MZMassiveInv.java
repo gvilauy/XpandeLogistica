@@ -22,6 +22,7 @@ import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
@@ -34,6 +35,9 @@ import org.compiere.process.DocumentEngine;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
+import org.xpande.comercial.model.MZReservaVta;
+import org.xpande.comercial.model.MZReservaVtaLin;
+import org.xpande.core.model.MZProductoUPC;
 import org.xpande.core.utils.PriceListUtils;
 
 /** Generated Model for Z_MassiveInv
@@ -246,74 +250,129 @@ public class MZMassiveInv extends X_Z_MassiveInv implements DocAction, DocOption
 
 		Timestamp today = TimeUtil.trunc(new Timestamp (System.currentTimeMillis()), TimeUtil.TRUNC_DAY);
 
-		/*
+		// CORREGIR: la ubicación debería estar en cada linea de la reserva, hoy no lo esta.
+		MLocator locator = ((MWarehouse) this.getM_Warehouse()).getDefaultLocator();
+
 		for (MZMassiveInvLine massiveInvLine: massiveInvLineList){
 			// Genero InOut siempre.
 			// La diferencia solamente esta en el documento: si se indica generar Solo Factura, entonces documento = entrega
 			// Si se indica generar remito o remito y factura, entonces documento = remito de entrega
 			// Esta diferencia en el documento tiene que ver con facturación electrónica, ya que los remitos de entrega son electrónicos
 			// y debe llevar el consecutivo en la numeración, mientras que las entregas normales no.
+			MInOut inOut = new MInOut(getCtx(), 0, get_TrxName());
+			inOut.setM_Warehouse_ID(this.getM_Warehouse_ID());
+			inOut.setIsSOTrx(true);
+			inOut.setAD_Org_ID(this.getAD_Org_ID());
+
+			// CORREGIR: debo tomar documento segun sea entrega normal o eRemito, desde la configuración comercial. Hoy falta esa configuración.
+			//inOut.setC_DocType_ID(comercialConfig.getDefaultDocMMR_ID());
+			inOut.setC_DocType_ID(1000011);
+
+			inOut.setDescription("Generada en Facturacion Masiva: " + this.getDocumentNo());
+			inOut.setMovementType("C-");
+			inOut.setMovementDate(today);
+			inOut.setC_BPartner_ID(massiveInvLine.getC_BPartner_ID());
+			inOut.setC_BPartner_Location_ID(massiveInvLine.getC_BPartner_Location_ID());
+			inOut.setDeliveryRule(X_M_InOut.DELIVERYRULE_Availability);
+			inOut.setFreightCostRule(X_M_InOut.FREIGHTCOSTRULE_FreightIncluded);
+			inOut.setDeliveryViaRule(X_M_InOut.DELIVERYVIARULE_Pickup);
+			inOut.setPriorityRule(X_M_InOut.PRIORITYRULE_Medium);
+			inOut.saveEx();
+
+			// Genero lineas de entrega, recorriendo lineas de la reserva asociada a esta linea de facturación masiva
+			MZReservaVta reservaVta = new MZReservaVta(getCtx(), massiveInvLine.getZ_ReservaVta_ID(), get_TrxName());
+			List<MZReservaVtaLin> reservaVtaLinList = reservaVta.getLines();
+			int lineNo = 0;
+			for (MZReservaVtaLin reservaVtaLin: reservaVtaLinList){
+				lineNo = lineNo + 10;
+
+				MInOutLine inOutLine = new MInOutLine(inOut);
+				inOutLine.setLine(lineNo);
+
+				// CORREGIR: la ubicación debería estar en cada linea de la reserva, hoy no lo esta.
+				inOutLine.setM_Locator_ID(locator.get_ID());
+
+				inOutLine.setM_Product_ID(reservaVtaLin.getM_Product_ID());
+				inOutLine.setC_UOM_ID(reservaVtaLin.getC_UOM_ID());
+				inOutLine.setMovementQty(reservaVtaLin.getQtyReserved());
+				inOutLine.setQtyEntered(reservaVtaLin.getQtyReservedEnt());
+				inOutLine.saveEx();
+			}
+			// Completo entrega
+			if (!inOut.processIt(DocAction.ACTION_Complete)){
+				m_processMsg = "No se pudo Completar Documento de Entrega para Reserva : " + reservaVta.getDocumentNo();
+				if (inOut.getProcessMsg() != null){
+					m_processMsg += "\n" + inOut.getProcessMsg();
+				}
+				return DocAction.STATUS_Invalid;
+			}
+			inOut.saveEx();
 
 			// Hago la factura si es necesario
 			if (!this.getTypeMassiveInv().equalsIgnoreCase(X_Z_MassiveInv.TYPEMASSIVEINV_SOLOREMITO)){
 				MInvoice invoice = new MInvoice(getCtx(), 0, get_TrxName());
 				invoice.setAD_Org_ID(this.getAD_Org_ID());
 				invoice.setIsSOTrx(true);
-				invoice.setC_DocTypeTarget_ID(cDocTypeID);
-				invoice.setC_DocType_ID(cDocTypeID);
+
+				// CORREGIR: Debo tomar documento desde configuracion comercial
+				invoice.setC_DocTypeTarget_ID(1000002);
+				invoice.setC_DocType_ID(1000002);
+
 				invoice.setDateInvoiced(today);
 				invoice.setDateAcct(today);
 				invoice.setC_BPartner_ID(massiveInvLine.getC_BPartner_ID());
 				invoice.setC_BPartner_Location_ID(massiveInvLine.getC_BPartner_Location_ID());
 				invoice.setC_Currency_ID(massiveInvLine.getC_Currency_ID());
 				invoice.setPaymentRule(X_C_Invoice.PAYMENTRULE_OnCredit);
-				invoice.setC_PaymentTerm_ID(paymentTerm.get_ID());
+
+				// CORREGIR: Debo tomar termino de pago desde el socio de negocio
+				invoice.setC_PaymentTerm_ID(1000000);
+
 				invoice.setTotalLines(Env.ZERO);
 				invoice.setGrandTotal(Env.ZERO);
+				invoice.set_ValueOfColumn("AmtSubtotal", Env.ZERO);
 
-				MPriceList priceList = PriceListUtils.getPriceListByOrg(getCtx(), invoice.getAD_Client_ID(), invoice.getAD_Org_ID(),
-						invoice.getC_Currency_ID(), true, null, null);
-				if ((priceList == null) || (priceList.get_ID() <= 0)){
-					continue;
-				}
-
-				invoice.setM_PriceList_ID(priceList.get_ID());
-				invoice.setIsTaxIncluded(priceList.isTaxIncluded());
-				invoice.set_ValueOfColumn("AmtSubtotal", amtTotal);
-				invoice.set_ValueOfColumn("DocBaseType", docType.getDocBaseType());
+				MOrder order = (MOrder) reservaVta.getC_Order();
+				invoice.setM_PriceList_ID(order.getM_PriceList_ID());
+				invoice.setIsTaxIncluded(order.isTaxIncluded());
 				invoice.set_ValueOfColumn("EstadoAprobacion", "APROBADO");
 				invoice.set_ValueOfColumn("TipoFormaPago", "CREDITO");
 				invoice.saveEx();
 
-				// Linea de Factura
-				MInvoiceLine line = new MInvoiceLine(invoice);
-				line.set_ValueOfColumn("AD_Client_ID", invoice.getAD_Client_ID());
-				line.setAD_Org_ID(invoice.getAD_Org_ID());
-				line.setM_Product_ID(product.get_ID());
-				line.set_ValueOfColumn("IsBySelection", true);
-				line.setC_UOM_ID(product.getC_UOM_ID());
-				line.setQtyEntered(Env.ONE);
-				line.setQtyInvoiced(Env.ONE);
-				line.setPriceEntered(invoice.getTotalLines());
-				line.setPriceActual(invoice.getTotalLines());
-				line.setLineNetAmt(invoice.getTotalLines());
-				line.set_ValueOfColumn("AmtSubTotal", invoice.getTotalLines());
-				line.setC_Tax_ID(taxProduct.get_ID());
-				line.setTaxAmt();
-				line.setLineNetAmt();
-				line.saveEx();
+				// Genero lineas de entrega, recorriendo lineas de la reserva asociada a esta linea de facturación masiva
+				lineNo = 0;
+				for (MZReservaVtaLin reservaVtaLin: reservaVtaLinList){
+					lineNo = lineNo + 10;
 
+					MInvoiceLine invoiceLine = new MInvoiceLine(invoice);
+					invoiceLine.setLine(lineNo);
+					invoiceLine.setAD_Org_ID(invoice.getAD_Org_ID());
+					invoiceLine.setM_Product_ID(reservaVtaLin.getM_Product_ID());
+					invoiceLine.setC_UOM_ID(reservaVtaLin.getC_UOM_ID());
+					invoiceLine.setQtyEntered(reservaVtaLin.getQtyReservedEnt());
+					invoiceLine.setQtyInvoiced(reservaVtaLin.getQtyReserved());
+					MOrderLine orderLine = (MOrderLine) reservaVtaLin.getC_OrderLine();
+					invoiceLine.setPriceEntered(orderLine.getPriceEntered());
+					invoiceLine.setPriceActual(orderLine.getPriceActual());
+					invoiceLine.setLineNetAmt(orderLine.getLineNetAmt());
+					invoiceLine.set_ValueOfColumn("AmtSubTotal", orderLine.get_Value("AmtSubTotal"));
+					invoiceLine.setC_Tax_ID(orderLine.getC_Tax_ID());
+					invoiceLine.setTaxAmt((BigDecimal)orderLine.get_Value("TaxAmt"));
+					invoiceLine.setLineNetAmt();
+					invoiceLine.saveEx();
+				}
 				if (!invoice.processIt(DocAction.ACTION_Complete)){
-					String message = "";
-					if (invoice.getProcessMsg() != null) message = invoice.getProcessMsg();
-					System.out.println("No se pudo completar Invoice en Venta Cuenta Corriente Sisteco : " + message);
+					m_processMsg = "No se pudo Completar Factura para Reserva : " + reservaVta.getDocumentNo();
+					if (inOut.getProcessMsg() != null){
+						m_processMsg += "\n" + inOut.getProcessMsg();
+					}
+					return DocAction.STATUS_Invalid;
 				}
 				else{
 					invoice.saveEx();
 				}
 			}
 		}
-		*/
 
 		//	User Validation
 		String valid = ModelValidationEngine.get().fireDocValidate(this, ModelValidator.TIMING_AFTER_COMPLETE);
